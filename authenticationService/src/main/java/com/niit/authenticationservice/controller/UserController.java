@@ -3,6 +3,8 @@ package com.niit.authenticationservice.controller;
 import java.util.List;
 import java.util.Map;
 
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +30,8 @@ public class UserController {
 	SecurityTokenGenerator securityTokenGenerator;
 
 	@PostMapping("/login")
+	@HystrixCommand(fallbackMethod = "hystrixmethod",commandKey = "loginKey",groupKey = "login")
+	@HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds",value = "1000")
 	public ResponseEntity<?> userLogin(@RequestBody User user) throws UserNotFoundException {
 
 		ResponseEntity<?> responseEntity;
@@ -47,6 +51,11 @@ public class UserController {
 		}
 		
 		return responseEntity;
+	}
+
+	public ResponseEntity<?> hystrixmethod(@RequestBody User user) throws UserNotFoundException{
+		String alart = "Server is unable to take the request, Now please try after some time";
+		return new ResponseEntity<>(alart,HttpStatus.BAD_REQUEST);
 	}
 	
 	@PostMapping("/register")
